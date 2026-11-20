@@ -639,6 +639,345 @@ async function cambiarReserva(reserva, accion) {
     }
 }
 
+
+// =============================================
+// PARTNERS - EDITAR PROGRAMACIONES
+// GUARDAR MODIFICACIONES EN FIREBASE
+// =============================================
+
+function abrirEditor(reserva) {
+
+    // Evitar abrir dos ventanas
+    if (document.getElementById("ventanaEditar")) {
+        return;
+    }
+
+    const ventana = document.createElement("div");
+    ventana.id = "ventanaEditar";
+    ventana.className = "fondo-editar";
+
+    // Crear formulario de edición
+    ventana.innerHTML = `
+        <div class="tarjeta-editar">
+
+            <h2>✏️ Editar programación</h2>
+            <p>Modifica los datos del alumno.</p>
+
+            <form id="formularioEditar">
+
+                <label for="editarAlumno">
+                    Nombre completo
+                </label>
+                <input id="editarAlumno"
+                       type="text"
+                       maxlength="100"
+                       required>
+
+                <label for="editarCelular">
+                    Celular (Opcional)
+                </label>
+                <input id="editarCelular"
+                       type="tel"
+                       maxlength="20">
+
+                <label for="editarServicio">
+                    Servicio
+                </label>
+                <select id="editarServicio" required></select>
+
+                <div class="dos-columnas">
+                    <div>
+                        <label for="editarFecha">Fecha</label>
+                        <input id="editarFecha"
+                               type="date"
+                               required>
+                    </div>
+
+                    <div>
+                        <label for="editarHora">Hora</label>
+                        <select id="editarHora" required></select>
+                    </div>
+                </div>
+
+                <div class="dos-columnas">
+                    <div>
+                        <label for="editarDuracion">Duración</label>
+                        <select id="editarDuracion" required></select>
+                    </div>
+
+                    <div>
+                        <label for="editarInstructor">Instructor</label>
+                        <select id="editarInstructor" required></select>
+                    </div>
+                </div>
+
+                <label for="editarObservacion">
+                    Observaciones
+                </label>
+                <textarea id="editarObservacion"
+                          rows="3"
+                          maxlength="500"></textarea>
+
+                <p id="errorEditar"
+                   class="mensaje-formulario"
+                   role="status"></p>
+
+                <div class="botones-editar">
+                    <button type="button"
+                            id="cancelarEditar">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            id="guardarEdicion">
+                        Guardar cambios
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(ventana);
+
+    // Copiar las alternativas actuales
+    // del formulario principal
+    const campos = [
+        ["servicio", "editarServicio"],
+        ["hora", "editarHora"],
+        ["duracion", "editarDuracion"],
+        ["instructor", "editarInstructor"]
+    ];
+
+    campos.forEach(([origen, destino]) => {
+        $(destino).innerHTML = $(origen).innerHTML;
+    });
+
+    // Cargar los datos actuales del alumno
+    $("editarAlumno").value = reserva.alumno;
+    $("editarCelular").value = reserva.celular || "";
+    $("editarServicio").value = reserva.servicio;
+    $("editarFecha").value = reserva.fecha;
+    $("editarHora").value = reserva.hora;
+    $("editarDuracion").value = String(reserva.duracion);
+    $("editarInstructor").value = reserva.instructor;
+    $("editarObservacion").value =
+        reserva.observacion || "";
+
+    // Cancelar sin realizar modificaciones
+    $("cancelarEditar").addEventListener("click", () => {
+        ventana.remove();
+    });
+
+    // Guardar cambios
+    $("formularioEditar").addEventListener(
+        "submit",
+        async evento => {
+
+            evento.preventDefault();
+
+            const aviso = $("errorEditar");
+            aviso.textContent = "";
+            aviso.className = "mensaje-formulario";
+
+            const actualizado = {
+                ...reserva,
+                alumno: $("editarAlumno").value.trim(),
+                celular: $("editarCelular").value.trim(),
+                servicio: $("editarServicio").value,
+                fecha: $("editarFecha").value,
+                hora: $("editarHora").value,
+                duracion: Number($("editarDuracion").value),
+                instructor: $("editarInstructor").value,
+                observacion: $("editarObservacion").value.trim()
+            };
+
+            if (
+                !actualizado.alumno ||
+                !actualizado.servicio ||
+                !actualizado.fecha ||
+                !actualizado.hora ||
+                !actualizado.instructor
+            ) {
+                aviso.textContent =
+                    "Completa todos los campos obligatorios.";
+                aviso.classList.add("error");
+                return;
+            }
+
+            if (
+                actualizado.celular !== "" &&
+                !/^[+0-9()\s-]{7,20}$/.test(actualizado.celular)
+            ) {
+                aviso.textContent =
+                    "Ingresa un celular válido.";
+                aviso.classList.add("error");
+                return;
+            }
+
+            const inicio = minutos(actualizado.hora);
+            const fin = inicio + actualizado.duracion;
+
+            if (
+                !Number.isFinite(inicio) ||
+                !Number.isFinite(fin) ||
+                actualizado.duracion <= 0 ||
+                inicio < HORA_APERTURA ||
+                fin > HORA_CIERRE
+            ) {
+                aviso.textContent =
+                    "La clase debe terminar como máximo a las 18:00.";
+                aviso.classList.add("error");
+                return;
+            }
+
+            const boton = $("guardarEdicion");
+            boton.disabled = true;
+            boton.textContent = "Guardando...";
+
+            // Documento original y documento de destino
+            const origen = documentoHorario(
+                reserva.fecha,
+                reserva.instructor
+            );
+
+            const destino = documentoHorario(
+                actualizado.fecha,
+                actualizado.instructor
+            );
+
+            const mismoDocumento =
+                origen.path === destino.path;
+
+            try {
+
+                await runTransaction(db, async transaccion => {
+
+                    // Leer los documentos antes de escribir
+                    const docOrigen =
+                        await transaccion.get(origen);
+
+                    if (!docOrigen.exists()) {
+                        throw new Error("NO_EXISTE");
+                    }
+
+                    const docDestino = mismoDocumento
+                        ? docOrigen
+                        : await transaccion.get(destino);
+
+                    const clasesOrigen =
+                        docOrigen.data().clases || [];
+
+                    const clasesDestino = mismoDocumento
+                        ? clasesOrigen
+                        : docDestino.exists()
+                            ? docDestino.data().clases || []
+                            : [];
+
+                    const original = clasesOrigen.find(
+                        r => r.id === reserva.id
+                    );
+
+                    if (!original) {
+                        throw new Error("NO_EXISTE");
+                    }
+
+                    // Revisar horarios ocupados
+                    const ocupado = clasesDestino.some(r => {
+
+                        if (r.id === reserva.id) return false;
+
+                        const inicioExistente =
+                            minutos(r.hora);
+
+                        const finExistente =
+                            inicioExistente +
+                            Number(r.duracion);
+
+                        return (
+                            inicio < finExistente &&
+                            fin > inicioExistente
+                        );
+                    });
+
+                    if (ocupado) {
+                        throw new Error("HORARIO_OCUPADO");
+                    }
+
+                    if (mismoDocumento) {
+
+                        // Editar dentro del mismo día e instructor
+                        const clasesNuevas = clasesOrigen.map(r =>
+                            r.id === reserva.id
+                                ? {...original, ...actualizado}
+                                : r
+                        );
+
+                        transaccion.update(origen, {
+                            clases: clasesNuevas
+                        });
+
+                    } else {
+
+                        // Quitar la clase de su horario anterior
+                        const restantes = clasesOrigen.filter(
+                            r => r.id !== reserva.id
+                        );
+
+                        transaccion.update(origen, {
+                            clases: restantes
+                        });
+
+                        // Trasladarla al nuevo día o instructor
+                        transaccion.set(destino, {
+                            fecha: actualizado.fecha,
+                            instructor: actualizado.instructor,
+                            clases: [
+                                ...clasesDestino,
+                                {...original, ...actualizado}
+                            ]
+                        });
+                    }
+                });
+
+                // Mostrar la nueva fecha en el calendario
+                fechaActual = actualizado.fecha;
+
+                const [anio, mes] =
+                    fechaActual.split("-").map(Number);
+
+                mesVisible = new Date(anio, mes - 1, 1);
+                $("fecha").value = fechaActual;
+
+                ventana.remove();
+                actualizarPantalla();
+
+                alert(
+                    "¡Programación actualizada correctamente en Firebase!"
+                );
+
+            } catch (error) {
+
+                console.error("Error al editar:", error);
+
+                aviso.textContent =
+                    error.message === "HORARIO_OCUPADO"
+                        ? "El instructor ya tiene otra clase en ese horario."
+                        : error.message === "NO_EXISTE"
+                            ? "La reserva ya no existe. Actualiza la agenda."
+                            : "No se pudieron guardar los cambios.";
+
+                aviso.classList.add("error");
+
+            } finally {
+                boton.disabled = false;
+                boton.textContent = "Guardar cambios";
+            }
+        }
+    );
+}
+
+
 // =============================================
 // ESTADÍSTICAS
 // =============================================
@@ -807,6 +1146,19 @@ function dibujarTabla() {
                 cambiarReserva(reserva, "eliminar");
             }
         });
+
+// BOTÓN EDITAR PROGRAMACIÓN
+const editar = document.createElement("button");
+
+editar.type = "button";
+editar.textContent = "✏️ Editar";
+editar.className = "boton-editar";
+
+editar.addEventListener("click", () => {
+    abrirEditor(reserva);
+});
+
+acciones.appendChild(editar);
 
         acciones.appendChild(eliminar);
 

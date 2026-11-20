@@ -629,3 +629,118 @@ footer {
     color: #334155;
     font-size: 12px;
 }
+
+
+
+/* ========================================
+   PARTNERS - EDITAR PROGRAMACIONES
+======================================== */
+
+/* Botón editar en la tabla */
+.boton-editar {
+    background: #e7f0ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 6px;
+    padding: 7px 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.boton-editar:hover {
+    background: #cfe2ff !important;
+}
+
+/* Fondo de la ventana */
+.fondo-editar {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 15px;
+    overflow-y: auto;
+}
+
+/* Ventana para editar */
+.tarjeta-editar {
+    background: white;
+    width: 100%;
+    max-width: 520px;
+    max-height: 95vh;
+    overflow-y: auto;
+
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 15px 45px #0003;
+}
+
+.tarjeta-editar h2 {
+    font-size: 22px;
+    color: #14243b;
+}
+
+.tarjeta-editar p {
+    color: #64748b;
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+.tarjeta-editar form {
+    margin-top: 12px;
+}
+
+.tarjeta-editar input,
+.tarjeta-editar select,
+.tarjeta-editar textarea {
+    width: 100%;
+}
+
+/* Botones de la ventana */
+.botones-editar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.botones-editar button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#cancelarEditar {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+#guardarEdicion {
+    background: #2459d3;
+    color: white;
+}
+
+#guardarEdicion:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+@media (max-width: 600px) {
+    .tarjeta-editar {
+        padding: 18px;
+    }
+
+    .botones-editar {
+        flex-direction: column;
+    }
+
+    .botones-editar button {
+        width: 100%;
+    }
+}
