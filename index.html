@@ -1,0 +1,679 @@
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>PARTNERS | Agenda Virtual</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- CARGAR JAVASCRIPT UNA SOLA VEZ -->
+    <script type="module" src="script.js"></script>
+</head>
+
+<body>
+
+<!-- ========================================
+     PANTALLA DE INICIO DE SESIÓN
+======================================== -->
+
+<section id="pantallaLogin" class="pantalla-login">
+
+    <div class="login-tarjeta">
+
+        <img
+            src="imagen/logo.png"
+            alt="Logo Escuela de Manejo PARTNERS"
+            class="login-logo"
+        >
+
+        <h2>AGENDA VIRTUAL PARTNERS</h2>
+
+        <p>Acceso exclusivo para asesores</p>
+
+        <form id="formularioLogin">
+
+            <label for="correoLogin">
+                Correo electrónico
+            </label>
+
+            <input
+                id="correoLogin"
+                type="email"
+                placeholder="Ingrese su correo"
+                autocomplete="username"
+                required
+            >
+
+            <label for="claveLogin">
+                Contraseña
+            </label>
+
+            <input
+                id="claveLogin"
+                type="password"
+                placeholder="Ingrese su contraseña"
+                autocomplete="current-password"
+                required
+            >
+
+            <p id="errorLogin" role="alert"></p>
+
+            <button
+                type="submit"
+                class="boton principal"
+            >
+                INGRESAR A LA AGENDA
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+<!-- ========================================
+     APLICACIÓN PARTNERS
+     SOLO VISIBLE AL INICIAR SESIÓN
+======================================== -->
+
+<div id="aplicacionPartners" hidden>
+
+
+    <!-- ENCABEZADO -->
+
+    <header class="encabezado">
+
+        <div class="marca">
+
+            <img
+                src="imagen/logo.png"
+                alt="Logo PARTNERS"
+            >
+
+            <div>
+                <h2>PARTNERS</h2>
+                <p>Escuela de Manejo</p>
+                <small>¡Aprobamos Contigo!</small>
+            </div>
+
+        </div>
+
+        <span class="estado">
+            Agenda Virtual
+        </span>
+
+        <button
+            type="button"
+            id="cerrarSesion"
+            class="boton secundario"
+        >
+            Cerrar sesión
+        </button>
+
+    </header>
+
+
+    <!-- CONTENIDO PRINCIPAL -->
+
+    <main class="contenedor">
+
+
+        <!-- TÍTULO -->
+
+        <section class="titulo-principal">
+
+            <div>
+
+                <span class="etiqueta">
+                    PROGRAMACIÓN DE CLASES
+                </span>
+
+                <h1>Agenda Virtual PARTNERS</h1>
+
+                <p>
+                    Registra alumnos y organiza sus clases
+                    por fecha, hora e instructor.
+                </p>
+
+            </div>
+
+            <button
+                id="exportarBtn"
+                type="button"
+                class="boton secundario"
+            >
+                Exportar a Excel (CSV)
+            </button>
+
+        </section>
+
+
+        <!-- =====================================
+             ESTADÍSTICAS
+        ====================================== -->
+
+        <section class="estadisticas">
+
+            <div class="estadistica">
+                <span>Clases de hoy</span>
+                <strong id="clasesHoy">0</strong>
+            </div>
+
+            <div class="estadistica">
+                <span>Programadas</span>
+                <strong id="programadas">0</strong>
+            </div>
+
+            <div class="estadistica">
+                <span>Completadas</span>
+                <strong id="completadas">0</strong>
+            </div>
+
+            <div class="estadistica">
+                <span>Total de registros</span>
+                <strong id="totalRegistros">0</strong>
+            </div>
+
+        </section>
+
+
+        <!-- =====================================
+             CALENDARIO Y FORMULARIO
+        ====================================== -->
+
+        <div class="distribucion">
+
+
+            <!-- CALENDARIO -->
+
+            <section class="tarjeta">
+
+                <div class="titulo-tarjeta">
+
+                    <h2>Calendario de clases</h2>
+
+                    <button
+                        type="button"
+                        id="hoyBtn"
+                        class="boton pequeno"
+                    >
+                        Hoy
+                    </button>
+
+                </div>
+
+
+                <!-- CAMBIAR DE MES -->
+
+                <div class="navegacion-mes">
+
+                    <button
+                        type="button"
+                        id="mesAnterior"
+                        aria-label="Mes anterior"
+                    >
+                        ❮
+                    </button>
+
+                    <h3 id="nombreMes"></h3>
+
+                    <button
+                        type="button"
+                        id="mesSiguiente"
+                        aria-label="Mes siguiente"
+                    >
+                        ❯
+                    </button>
+
+                </div>
+
+
+                <!-- DÍAS DE LA SEMANA -->
+
+                <div class="dias-semana">
+
+                    <span>Lun</span>
+                    <span>Mar</span>
+                    <span>Mié</span>
+                    <span>Jue</span>
+                    <span>Vie</span>
+                    <span>Sáb</span>
+                    <span>Dom</span>
+
+                </div>
+
+
+                <!-- DÍAS DEL CALENDARIO -->
+
+                <div
+                    id="diasCalendario"
+                    class="dias-calendario"
+                ></div>
+
+
+                <!-- FECHA SELECCIONADA -->
+
+                <p class="fecha-elegida">
+
+                    Fecha seleccionada:
+
+                    <strong id="fechaSeleccionada"></strong>
+
+                </p>
+
+            </section>
+
+
+            <!-- =====================================
+                 FORMULARIO PARA INSCRIBIR ALUMNOS
+            ====================================== -->
+
+            <section class="tarjeta">
+
+                <h2>Inscribir alumno</h2>
+
+                <form id="formularioReserva">
+
+
+                    <!-- NOMBRE -->
+
+                    <label for="alumno">
+                        Nombre completo
+                    </label>
+
+                    <input
+                        id="alumno"
+                        type="text"
+                        maxlength="100"
+                        placeholder="Ingrese nombre y apellido"
+                        required
+                    >
+
+
+                    <!-- CELULAR OPCIONAL -->
+
+                    <label for="celular">
+                        Número de celular (Opcional)
+                    </label>
+
+                    <input
+                        id="celular"
+                        type="tel"
+                        maxlength="20"
+                        placeholder="Puede dejarlo vacío"
+                    >
+
+
+                    <!-- SERVICIO -->
+
+                    <label for="servicio">
+                        Servicio
+                    </label>
+
+                    <select id="servicio" required>
+
+                        <option value="">
+                            Seleccionar
+                        </option>
+
+                        <option>
+                            Práctica Circuito Alterno
+                        </option>
+
+                        <option>
+                            Práctica Circuito oficial
+                        </option>
+
+                        <option>
+                            Paquete 600
+                        </option>
+
+                        <option>
+                            Paquete 550
+                        </option>
+
+                        <option>
+                            Práctica A2B
+                        </option>
+
+                        <option>
+                            Paquete 495
+                        </option>
+
+                        <option>
+                            Paquete 350
+                        </option>
+
+                        <option>
+                            Paquete 250
+                        </option>
+
+                        <option>
+                            Moto B2B
+                        </option>
+
+                        <option>
+                            MOTOTAXI B2C
+                        </option>
+
+                        <option>
+                            Exámen Médico
+                        </option>
+
+                        <option>
+                            Otro
+                        </option>
+
+                    </select>
+
+
+                    <!-- FECHA Y HORA -->
+
+                    <div class="dos-columnas">
+
+                        <div>
+
+                            <label for="fecha">
+                                Fecha de clase
+                            </label>
+
+                            <input
+                                id="fecha"
+                                type="date"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div>
+
+                            <label for="hora">
+                                Hora de inicio
+                            </label>
+
+                            <select id="hora" required>
+
+                                <option value="">
+                                    Seleccione una hora
+                                </option>
+
+                                <option value="07:00">07:00</option>
+                                <option value="07:30">07:30</option>
+
+                                <option value="08:00">08:00</option>
+                                <option value="08:30">08:30</option>
+
+                                <option value="09:00">09:00</option>
+                                <option value="09:30">09:30</option>
+
+                                <option value="10:00">10:00</option>
+                                <option value="10:30">10:30</option>
+
+                                <option value="11:00">11:00</option>
+                                <option value="11:30">11:30</option>
+
+                                <option value="12:00">12:00</option>
+                                <option value="12:30">12:30</option>
+
+                                <option value="13:00">13:00</option>
+                                <option value="13:30">13:30</option>
+
+                                <option value="14:00">14:00</option>
+                                <option value="14:30">14:30</option>
+
+                                <option value="15:00">15:00</option>
+                                <option value="15:30">15:30</option>
+
+                                <option value="16:00">16:00</option>
+                                <option value="16:30">16:30</option>
+
+                                <option value="17:00">17:00</option>
+                                <option value="17:30">17:30</option>
+                                <option value="18:00">18:00</option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DURACIÓN E INSTRUCTOR -->
+
+                    <div class="dos-columnas">
+
+
+                        <!-- DURACIÓN -->
+
+                        <div>
+
+                            <label for="duracion">
+                                Duración
+                            </label>
+
+                            <select id="duracion">
+
+                                <option value="30">
+                                    30 minutos
+                                </option>
+
+                                <option value="60" selected>
+                                    1 hora
+                                </option>
+
+                                <option value="120">
+                                    2 horas
+                                </option>
+
+                                <option value="180">
+                                    3 horas
+                                </option>
+
+                                <option value="240">
+                                    4 horas
+                                </option>
+
+                                <option value="300">
+                                    5 horas
+                                </option>
+
+                                <option value="360">
+                                    6 horas
+                                </option>
+
+                                <option value="600">
+                                    10 horas
+                                </option>
+
+                                <option value="45">
+                                    3 Vueltas
+                                </option>
+
+                                <option value="90">
+                                    6 vueltas
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- INSTRUCTOR -->
+
+                        <div>
+
+                            <label for="instructor">
+                                Instructor
+                            </label>
+
+                            <select id="instructor" required>
+
+                                <option value="">
+                                    Seleccionar
+                                </option>
+
+                                <option>
+                                    Instructor Cristhian
+                                </option>
+
+                                <option>
+                                    Instructor Sebastian
+                                </option>
+
+                                <option>
+                                    Instructora Maria
+                                </option>
+
+                                <option>
+                                    Instructor Erickson
+                                </option>
+
+                                <option>
+                                    Instructor Apoyo
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OBSERVACIONES -->
+
+                    <label for="observacion">
+                        Observaciones
+                    </label>
+
+                    <textarea
+                        id="observacion"
+                        rows="3"
+                        maxlength="500"
+                        placeholder="Ej. Práctica en circuito"
+                    ></textarea>
+
+
+                    <!-- MENSAJE DE CONFIRMACIÓN O ERROR -->
+
+                    <p
+                        id="mensajeFormulario"
+                        class="mensaje-formulario"
+                        role="status"
+                    ></p>
+
+
+                    <!-- BOTÓN GUARDAR -->
+
+                    <button
+                        type="submit"
+                        class="boton principal"
+                    >
+                        Guardar programación
+                    </button>
+
+                </form>
+
+            </section>
+
+        </div>
+
+
+        <!-- =====================================
+             LISTA DE PROGRAMACIONES
+        ====================================== -->
+
+        <section class="tarjeta listado">
+
+            <div class="titulo-tarjeta">
+
+                <div>
+
+                    <h2>Programación de clases</h2>
+
+                    <p>
+                        Consulta los alumnos inscritos.
+                    </p>
+
+                </div>
+
+                <select
+                    id="filtroEstado"
+                    aria-label="Filtrar por estado"
+                >
+
+                    <option value="todos">
+                        Todas
+                    </option>
+
+                    <option value="programada">
+                        Programadas
+                    </option>
+
+                    <option value="completada">
+                        Completadas
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- TABLA DE ALUMNOS -->
+
+            <div class="tabla-contenedor">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Horario</th>
+                            <th>Alumno</th>
+                            <th>Servicio</th>
+                            <th>Instructor</th>
+                            <th>Estado</th>
+                            <th>Observaciones</th>
+                            <th>Acciones</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="tablaReservas"></tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- PIE DE PÁGINA -->
+
+        <footer>
+
+            © PARTNERS — Escuela de Manejo
+
+            <p>¡Aprobamos Contigo!</p>
+
+        </footer>
+
+
+    </main>
+
+</div>
+<!-- FIN DE APLICACIÓN PARTNERS -->
+
+
+</body>
+
+</html>
